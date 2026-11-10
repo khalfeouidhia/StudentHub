@@ -9,7 +9,7 @@
 
 - **⚡ Zero-Glitch Neo-Fintech UI:** Built on an Emerald Black (`#061412`) canvas with mint cyan accents, frosted glass cards (sigma 24 blur), and smooth rolling odometer number tickers.
 - **💰 Smart Budgeting & Safe Buffer:** Real-time monthly allowance tracking with categorized outflows, receipt attachments, and retrospective month rollover archives.
-- **🍽️ Campus Resto U Integration: ( ONLY FOR "cukl.ooun.tn" )** Direct synchronization with university dining services to monitor student card balance, transaction logs, and daily meal menus with secure session management.
+- **🍽️ Campus Resto U Integration: ( ONLY FOR "cukl.ooun.rnu.tn" )** Direct synchronization with university dining services to monitor student card balance, transaction logs, and daily meal menus with secure session management.
 - **📚 Academic Tasks & Checklist:** Filterable deadlines (Academic vs. Personal Chores), progress indicators, and persistent local storage.
 - **🗓️ Timetable & Course Calendar:** Clean day/week academic timetable keeping critical assignment due dates in focus.
 - **🌊 Floating Liquid Glass Dock:** Custom 5-tab responsive navigation dock with adaptive layout down to 280dp micro-viewports and dynamic line-art vector icons.
