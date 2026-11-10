@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <title>Page Corrompue</title>
+</head>
+<body>
+  <!-- Missing .user-info element entirely -->
+  <div class="corrupt-header">
+    <span class="other-info">Pas d'utilisateur</span>
+  </div>
+
+  <!-- Missing dorm inputs (no #fu, #bloc, or #ch) -->
+
+  <!-- Corrupt KPI container with invalid numeric representations -->
+  <div class="infobox-container">
+    <div class="infobox">
+      <span class="infobox-data-number">--</span>
+      <div class="infobox-content">Solde Repas</div>
+    </div>
+    <div class="infobox">
+      <span class="infobox-data-number">N/A</span>
+      <div class="infobox-content">Total achat/mois</div>
+    </div>
+    <div class="infobox">
+      <span class="infobox-data-number">DT CORRUPT</span>
+      <div class="infobox-content">Dépenses/mois</div>
+    </div>
+  </div>
+
+  <!-- Corrupt table rows -->
+  <table id="repas-table">
+    <tbody>
+      <!-- Row with missing input.view_data -->
+      <tr>
+        <td>No Button</td>
+        <td>Déjeuner</td>
+        <td>invalid-date</td>
+        <td>Lundi</td>
+        <td>Inconnu</td>
+      </tr>
+      <!-- Empty row -->
+      <tr></tr>
+    </tbody>
+  </table>
+
+  <!-- Corrupt check-in table -->
+  <table id="h_access">
+    <tbody>
+      <tr>
+        <td>corrupt-timestamp</td>
+        <td>NotANumber</td>
+        <td></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- Corrupt top-up table -->
+  <table id="h_achat">
+    <tbody>
+      <tr>
+        <td>not-a-date</td>
+        <td>bad-count</td>
+      </tr>
+    </tbody>
+  </table>
+</body>
+</html>
