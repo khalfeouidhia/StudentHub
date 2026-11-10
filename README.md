@@ -41,8 +41,8 @@
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/khalfeouidhia/studenthold-app.git
-   cd studenthold-app
+   git clone https://github.com/khalfeouidhia/StudentHub.git
+   cd StudentHub
    ```
 
 2. **Install dependencies:**
