@@ -15,12 +15,14 @@ export '../../features/home/widgets/frosted_glass_kpi_card.dart';
 import '../../controllers/auth_controller.dart';
 import '../../controllers/budget_controller.dart';
 import '../../controllers/tasks_controller.dart';
+import '../../features/campus_resto/controllers/campus_resto_controller.dart';
+import '../../features/campus_resto/ui/widgets/resto_u_meal_strip.dart';
 import '../navigation/main_shell.dart';
 import '../sheets/payly_sheets.dart';
 import 'monthly_history_view.dart';
 import 'weekly_rhythm_card.dart';
 import 'glowing_typewriter_greeting.dart';
-import 'receipt_entry_sheet.dart';
+import '../../widgets/receipt_review_sheet.dart';
 
 /// Screen 1: Home Dashboard ("Minty Nest" Google Stitch Design)
 class HomeView extends StatelessWidget {
@@ -322,7 +324,7 @@ class _HomeDashboardState extends State<HomeDashboard> {
 
   void _showScanReceiptModal(BuildContext context, BudgetController? budget) {
     if (budget == null) return;
-    ReceiptEntrySheet.captureAndShow(context, budget);
+    ReceiptReviewSheet.showCaptureFlow(context, budget);
   }
 
   void _showAdjustCapModal(BuildContext context, BudgetController? budget) {
@@ -809,6 +811,7 @@ class _HomeDashboardState extends State<HomeDashboard> {
     AuthController? auth;
     BudgetController? budget;
     TasksController? tasksController;
+    CampusRestoController? restoController;
     try {
       auth = context.watch<AuthController>();
     } catch (_) {}
@@ -817,6 +820,9 @@ class _HomeDashboardState extends State<HomeDashboard> {
     } catch (_) {}
     try {
       tasksController = context.watch<TasksController>();
+    } catch (_) {}
+    try {
+      restoController = context.watch<CampusRestoController>();
     } catch (_) {}
 
     final displayName = widget.userName ??
@@ -1578,6 +1584,16 @@ class _HomeDashboardState extends State<HomeDashboard> {
                         ),
                         const SizedBox(height: 18),
 
+                        // Dynamic Resto U Meal Strip Widget (Milestone 2)
+                        RestoUMealStrip(
+                          currentTime: widget.currentDate,
+                          controller: restoController,
+                          onNavigateToResto: () {
+                            MainShell.of(context)?.switchTab(4);
+                          },
+                        ),
+                        const SizedBox(height: 18),
+
                         // Weekly Rhythm Card (directly below quick actions)
                         WeeklyRhythmCard(
                           budget: budget,
@@ -1663,56 +1679,60 @@ class _HomeDashboardState extends State<HomeDashboard> {
     required VoidCallback onTap,
   }) {
     return Expanded(
-      child: GestureDetector(
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(16),
+        clipBehavior: Clip.antiAlias,
+        child: Ink(
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.sandCream.withOpacity(0.4)),
-            boxShadow: const [
-              BoxShadow(
-                color: Color(0x06000000),
-                blurRadius: 8,
-                offset: Offset(0, 2),
-              ),
-            ],
+            border: Border.all(
+              color: const Color(0xFFC7CBB8).withOpacity(0.35),
+              width: 1,
+            ),
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 36,
-                height: 36,
-                decoration: const BoxDecoration(
-                  color: Color(0xFFF4F6F0),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  icon,
-                  color: const Color(0xFF1E3A2E),
-                  size: 20,
-                ),
-              ),
-              const SizedBox(height: 6),
-              SizedBox(
-                height: 14,
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  alignment: Alignment.center,
-                  child: Text(
-                    label,
-                    style: GoogleFonts.plusJakartaSans(
-                      color: AppColors.darkOlive,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(16),
+            splashColor: const Color(0xFF1E3A2E).withOpacity(0.08),
+            highlightColor: const Color(0xFF1E3A2E).withOpacity(0.04),
+            onTap: onTap,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SizedBox(
+                    width: 32,
+                    height: 32,
+                    child: Center(
+                      child: Icon(
+                        icon,
+                        color: const Color(0xFF1E3A2E),
+                        size: 20,
+                      ),
                     ),
-                    maxLines: 1,
                   ),
-                ),
+                  const SizedBox(height: 6),
+                  SizedBox(
+                    height: 14,
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.center,
+                      child: Text(
+                        label,
+                        style: GoogleFonts.plusJakartaSans(
+                          color: AppColors.darkOlive,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                        ),
+                        maxLines: 1,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ),

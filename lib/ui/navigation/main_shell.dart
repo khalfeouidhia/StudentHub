@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../features/campus_resto/services/resto_notification_service.dart';
 import '../../features/campus_resto/ui/views/resto_u_view.dart';
+import '../../services/home_widget_sync_service.dart';
 import '../views/home_view.dart';
 import '../views/expenses_view.dart';
 import '../views/calendar_view.dart';
@@ -63,6 +65,27 @@ class MainShellState extends State<MainShell> {
   void initState() {
     super.initState();
     _currentIndex = widget.initialIndex;
+
+    // Handle incoming notification taps (e.g. 8:00 AM reservation reminder)
+    RestoNotificationService.onNotificationTapped = (payload) {
+      if (payload == 'resto_u' || payload == 'tab:4') {
+        switchTab(4);
+      }
+    };
+
+    // Handle deep links when tapping Android Home Screen widgets
+    HomeWidgetSyncService.registerDeepLinkHandler(
+      onDeepLink: (uri) {
+        if (uri == null) return;
+        final uriStr = uri.toString().toLowerCase();
+        if (uriStr.contains('resto')) {
+          switchTab(4);
+        } else if (uriStr.contains('expense')) {
+          switchTab(0);
+          PaylySheets.openSpendSheet(context);
+        }
+      },
+    );
   }
 
   void switchTab(int index) {

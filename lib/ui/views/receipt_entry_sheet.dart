@@ -2,9 +2,9 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:image_picker/image_picker.dart';
 import '../../constants/app_colors.dart';
 import '../../controllers/budget_controller.dart';
+import '../../widgets/receipt_review_sheet.dart';
 
 /// Modal bottom sheet for entering verified expense details after snapping a physical receipt.
 class ReceiptEntrySheet extends StatefulWidget {
@@ -17,32 +17,13 @@ class ReceiptEntrySheet extends StatefulWidget {
     required this.imagePath,
   });
 
-  /// Captures a physical photo via device camera and opens the entry sheet.
+  /// Captures a receipt via Camera/Gallery and opens OCR review flow.
   static Future<void> captureAndShow(
     BuildContext context,
     BudgetController? budget,
   ) async {
     if (budget == null) return;
-    HapticFeedback.lightImpact();
-
-    try {
-      final ImagePicker picker = ImagePicker();
-      final XFile? photo = await picker.pickImage(
-        source: ImageSource.camera,
-        imageQuality: 85,
-      );
-
-      if (photo == null || !context.mounted) return;
-      await show(context, budget, imagePath: photo.path);
-    } catch (e) {
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Camera unavailable: $e'),
-          backgroundColor: AppColors.error,
-        ),
-      );
-    }
+    ReceiptReviewSheet.showCaptureFlow(context, budget);
   }
 
   /// Displays the receipt entry sheet modal for an existing image path.

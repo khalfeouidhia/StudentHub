@@ -1,3 +1,4 @@
+export 'resto_notification_service.dart';
 export 'session_storage_service.dart';
 export 'resto_auth_service.dart';
 export 'resto_scraper_service.dart';

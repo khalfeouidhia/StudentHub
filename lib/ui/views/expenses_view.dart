@@ -11,8 +11,8 @@ import '../../core/widgets/roulette_number_text.dart';
 import '../../controllers/budget_controller.dart';
 import '../../features/campus_resto/controllers/campus_resto_controller.dart';
 import '../../features/campus_resto/services/resto_budget_sync_service.dart';
-import 'receipt_entry_sheet.dart';
 import 'receipt_viewer_dialog.dart';
+import '../../widgets/receipt_review_sheet.dart';
 
 typedef ExpensesScreen = ExpensesView;
 
@@ -1569,8 +1569,9 @@ class _ExpensesViewState extends State<ExpensesView> {
                 icon: const Icon(Icons.camera_alt_outlined,
                     color: Colors.white, size: 20),
                 onPressed: () {
-                  if (budget != null)
-                    ReceiptEntrySheet.captureAndShow(context, budget);
+                  if (budget != null) {
+                    ReceiptReviewSheet.showCaptureFlow(context, budget);
+                  }
                 },
               ),
               Container(

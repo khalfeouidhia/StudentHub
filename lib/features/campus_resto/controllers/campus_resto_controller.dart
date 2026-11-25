@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:studenthold_app/controllers/budget_controller.dart';
 import 'package:studenthold_app/features/campus_resto/models/models.dart';
 import 'package:studenthold_app/features/campus_resto/services/services.dart';
+import 'package:studenthold_app/services/home_widget_sync_service.dart';
 
 /// Authentication and session status for the Resto U module.
 enum RestoAuthStatus {
@@ -52,6 +53,7 @@ class CampusRestoController extends ChangeNotifier {
   final RestoScraperService _scraperService;
   final RestoBudgetSyncService _budgetSyncService;
   final CampusRestoService _restoService;
+  final RestoNotificationService _notificationService;
   final SharedPreferences? _prefs;
   final String _baseUrl;
   final Duration _timeout;
@@ -72,6 +74,7 @@ class CampusRestoController extends ChangeNotifier {
     RestoScraperService? scraperService,
     RestoBudgetSyncService? budgetSyncService,
     CampusRestoService? restoService,
+    RestoNotificationService? notificationService,
     SharedPreferences? prefs,
     String baseUrl = defaultBaseUrl,
     Duration timeout = const Duration(seconds: 12),
@@ -93,11 +96,22 @@ class CampusRestoController extends ChangeNotifier {
               baseUrl: baseUrl,
               timeout: timeout,
             ),
+        _notificationService =
+            notificationService ?? RestoNotificationService(),
         _prefs = prefs,
         _baseUrl = baseUrl.endsWith('/')
             ? baseUrl.substring(0, baseUrl.length - 1)
             : baseUrl,
         _timeout = timeout;
+
+  @override
+  void notifyListeners() {
+    super.notifyListeners();
+    if (_dashboardData != null) {
+      _notificationService.syncReservationReminder(controller: this);
+      HomeWidgetSyncService.syncRestoUMenuWidget(controller: this);
+    }
+  }
 
   // ── Public Getters ────────────────────────────────────────────────────────
 

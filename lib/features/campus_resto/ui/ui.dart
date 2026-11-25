@@ -3,3 +3,4 @@ export 'widgets/resto_kpi_card.dart';
 export 'widgets/resto_login_sheet.dart';
 export 'widgets/meal_details_dialog.dart';
 export 'widgets/resto_history_sheet.dart';
+export 'widgets/resto_u_meal_strip.dart';

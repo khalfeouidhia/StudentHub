@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../constants/app_colors.dart';
 import '../models/expense_item.dart';
 import '../models/monthly_summary_report.dart';
+import '../services/home_widget_sync_service.dart';
 export '../models/expense_item.dart';
 export '../models/monthly_summary_report.dart';
 
@@ -676,5 +677,11 @@ class BudgetController extends ChangeNotifier {
     }
     notifyListeners();
     await _saveToStorage();
+  }
+
+  @override
+  void notifyListeners() {
+    super.notifyListeners();
+    HomeWidgetSyncService.syncBalanceExpensesWidget(budget: this);
   }
 }

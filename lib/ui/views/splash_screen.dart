@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../controllers/auth_controller.dart';
 import '../../controllers/budget_controller.dart';
+import '../../features/campus_resto/services/resto_notification_service.dart';
 import '../navigation/main_shell.dart';
 import 'welcome_vault_view.dart';
 
@@ -178,6 +179,12 @@ class _StudentHubSplashScreenState extends State<StudentHubSplashScreen>
             // Pending rollover will be prompted on dashboard
           }
         }
+
+        // Safely prompt for notification permission once the Activity is fully attached and active
+        try {
+          final notificationService = RestoNotificationService();
+          await notificationService.requestPermissions();
+        } catch (_) {}
       } catch (_) {
         // Safe fallback in test environments
       }

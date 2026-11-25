@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:home_widget/home_widget.dart';
+import 'package:timezone/data/latest_all.dart' as tz;
 import 'constants/app_colors.dart';
 import 'controllers/auth_controller.dart';
 import 'controllers/tasks_controller.dart';
@@ -10,6 +12,7 @@ import 'controllers/budget_controller.dart';
 import 'controllers/utilities_controller.dart';
 import 'controllers/user_profile_controller.dart';
 import 'features/campus_resto/controllers/campus_resto_controller.dart';
+import 'features/campus_resto/services/resto_notification_service.dart';
 import 'services/storage_service.dart';
 import 'ui/views/welcome_vault_view.dart';
 import 'ui/navigation/main_shell.dart';
@@ -44,6 +47,27 @@ void main() async {
       statusBarBrightness: Brightness.light,
     ),
   );
+
+  // Safe startup initialization: timezone, notifications, and home_widget
+  try {
+    tz.initializeTimeZones();
+  } catch (e) {
+    debugPrint('Timezone initialization: $e');
+  }
+
+  try {
+    final notificationService = RestoNotificationService();
+    await notificationService.init();
+  } catch (e) {
+    debugPrint('RestoNotificationService initialization: $e');
+  }
+
+  try {
+    await HomeWidget.setAppGroupId('group.com.example.studenthold_app');
+  } catch (e) {
+    debugPrint('HomeWidget initialization: $e');
+  }
+
   runApp(const StudentHoldApp());
 }
 

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="resto_widget_name">Resto U Menu</string>
+    <string name="resto_widget_description">Displays upcoming Resto U meal and reservation status</string>
+    <string name="budget_widget_name">Balance &amp; Expenses</string>
+    <string name="budget_widget_description">Displays StudentHub monthly remaining budget and expenses</string>
+</resources>
