@@ -126,7 +126,6 @@ class ReceiptOcrService {
         final recognizedText = await textRecognizer.processImage(inputImage);
         final ocrLines = <OcrLine>[];
 
-        // Extract all TextLine objects across all TextBlocks into a single flat list
         for (final block in recognizedText.blocks) {
           for (final line in block.lines) {
             ocrLines.add(OcrLine(
@@ -145,7 +144,6 @@ class ReceiptOcrService {
         textRecognizer.close();
       }
     } catch (_) {
-      // Fallback for desktop/unsupported runtimes
       return _parseForPcTesting(imageFile);
     }
   }
@@ -168,7 +166,6 @@ class ReceiptOcrService {
       return parseRawText(_azizaSampleReceipt, imagePath: imageFile.path);
     }
 
-    // Default to the exact MG Proxi Kelibia thermal receipt
     return parseRawText(_mgProxiKelibiaSampleReceipt, imagePath: imageFile.path);
   }
 
@@ -274,7 +271,6 @@ TOTAL DT 3.900
   List<String> groupLinesSpatially(List<OcrLine> lines, {double yTolerance = 22.0}) {
     if (lines.isEmpty) return [];
 
-    // 1. Sort all lines top-to-bottom by boundingBox.center.dy
     final sorted = List<OcrLine>.from(lines)
       ..sort((a, b) => a.boundingBox.center.dy.compareTo(b.boundingBox.center.dy));
 
@@ -294,8 +290,6 @@ TOTAL DT 3.900
           currentCluster.length;
       final effectiveTolerance = max(yTolerance, 0.6 * avgHeight);
 
-      // Check if this line significantly overlaps horizontally with an existing line in the cluster
-      // (Two items from the left column should not be merged into the same row)
       bool hasSignificantOverlap = false;
       for (final existing in currentCluster) {
         final overlapLeft = max(line.boundingBox.left, existing.boundingBox.left);
@@ -316,7 +310,6 @@ TOTAL DT 3.900
       }
     }
 
-    // 2. Sort lines within each row left-to-right by boundingBox.left and join with " "
     final reconstructed = <String>[];
     for (final cluster in clusters) {
       cluster.sort((a, b) => a.boundingBox.left.compareTo(b.boundingBox.left));
@@ -328,10 +321,6 @@ TOTAL DT 3.900
 
     return reconstructed;
   }
-
-  // ---------------------------------------------------------------------------
-  // Internal Core Parsing Pipeline
-  // ---------------------------------------------------------------------------
 
   ParsedReceipt _parseRows(
     List<String> rows, {
@@ -392,10 +381,6 @@ TOTAL DT 3.900
     );
   }
 
-  // ---------------------------------------------------------------------------
-  // Tunisian Dinar (DT/TND) Number Parsing
-  // ---------------------------------------------------------------------------
-
   /// Extracts the rightmost/last decimal price found on a line.
   static double? extractLastDecimalPrice(String text) {
     final cleaned = text.trim();
@@ -438,17 +423,11 @@ TOTAL DT 3.900
     return double.parse(parsed.toStringAsFixed(3));
   }
 
-  // ---------------------------------------------------------------------------
-  // Grand Total Detection (Handles Spaced-Out "T O T A L" and Payment Fallbacks)
-  // ---------------------------------------------------------------------------
-
   _TotalDetectionResult _detectGrandTotal(List<String> rows) {
-    // 1. Primary Bottom-Up Search matching space-collapsed total keywords
     for (int i = rows.length - 1; i >= 0; i--) {
       final row = rows[i];
       final collapsed = row.replaceAll(RegExp(r'\s+'), '').toUpperCase();
 
-      // Exclude subtotal lines
       if (collapsed.contains('SOUSTOTAL') || collapsed.contains('SUBTOTAL')) {
         continue;
       }
@@ -468,7 +447,6 @@ TOTAL DT 3.900
           );
         }
 
-        // Check adjacent line below (e.g. amount printed directly underneath label)
         if (i + 1 < rows.length) {
           final nextLinePrice = extractLastDecimalPrice(rows[i + 1]);
           if (nextLinePrice != null && nextLinePrice > 0.0) {
@@ -480,7 +458,6 @@ TOTAL DT 3.900
           }
         }
 
-        // Check adjacent line above
         if (i - 1 >= 0) {
           final prevLinePrice = extractLastDecimalPrice(rows[i - 1]);
           if (prevLinePrice != null && prevLinePrice > 0.0) {
@@ -494,7 +471,6 @@ TOTAL DT 3.900
       }
     }
 
-    // 2. Secondary Total Fallback: Payment lines (CARTE BANCAIRE, ESPECES, etc.)
     for (int i = rows.length - 1; i >= 0; i--) {
       final row = rows[i];
       final collapsed = row.replaceAll(RegExp(r'\s+'), '').toUpperCase();
@@ -530,32 +506,24 @@ TOTAL DT 3.900
     return largest;
   }
 
-  // ---------------------------------------------------------------------------
-  // Two-Column Line Item & Noise Detection
-  // ---------------------------------------------------------------------------
-
   ReceiptItem? _parseLineItem(String row) {
     final trimmed = row.trim();
     if (trimmed.isEmpty) return null;
 
-    // Find all decimal numbers on the line
     final decimalMatches = RegExp(r'\b([0-9]+[.,][0-9]{2,3})\b').allMatches(trimmed).toList();
 
     double? linePrice;
     int priceStartIndex = -1;
 
     if (decimalMatches.isNotEmpty) {
-      // The line total is the last/rightmost decimal price
       final lastMatch = decimalMatches.last;
       linePrice = _normalizeAmount(lastMatch.group(1));
 
-      // If there are 2 trailing prices (unit price + line total), start item name before unit price
       if (decimalMatches.length >= 2) {
         final prevMatch = decimalMatches[decimalMatches.length - 2];
         final between = trimmed.substring(prevMatch.end, lastMatch.start).trim();
         final after = trimmed.substring(lastMatch.end).trim();
 
-        // If between is just whitespace or 'x' and after is empty or currency, both are trailing prices
         if (RegExp(r'^(?:x|\*|\s)*$', caseSensitive: false).hasMatch(between) &&
             RegExp(r'^(?:DT|TND|\s)*$', caseSensitive: false).hasMatch(after)) {
           priceStartIndex = prevMatch.start;
@@ -566,7 +534,6 @@ TOTAL DT 3.900
         priceStartIndex = lastMatch.start;
       }
     } else {
-      // Fallback: check trailing number with currency
       final trailingMatch = RegExp(r'([0-9]+(?:[.,][0-9]{1,3})?)\s*(?:DT|TND)?$').firstMatch(trimmed);
       if (trailingMatch != null) {
         linePrice = _normalizeAmount(trailingMatch.group(1));
@@ -581,11 +548,9 @@ TOTAL DT 3.900
     final rawName = trimmed.substring(0, priceStartIndex).trim();
     if (rawName.isEmpty) return null;
 
-    // Must have at least 2 letters
     final letterCount = RegExp(r'[A-Za-z\u00C0-\u024F]').allMatches(rawName).length;
     if (letterCount < 2) return null;
 
-    // Parse leading quantity (e.g. "2 NOUILLE MIGO" or "2x NOUILLE MIGO")
     int quantity = 1;
     String cleanName = rawName;
 
@@ -627,7 +592,6 @@ TOTAL DT 3.900
 
     final collapsed = trimmed.replaceAll(RegExp(r'\s+'), '').toUpperCase();
 
-    // Non-item keywords
     final noiseKeywords = RegExp(
       r'(TOTAL|NETAPAYER|MONTANTTOTAL|APAYER|SOMME|'
       r'CARTEBANCAIRE|CARTE|ESPECES|CASH|RENDU|MONNAIE|CHANGE|'
@@ -647,15 +611,10 @@ TOTAL DT 3.900
       return true;
     }
 
-    // Purely numbers, times, or dates alone
     if (RegExp(r'^[0-9\s:/-]+$').hasMatch(trimmed)) return true;
 
     return false;
   }
-
-  // ---------------------------------------------------------------------------
-  // Store Name & Date Detection
-  // ---------------------------------------------------------------------------
 
   /// Sets the Merchant / Store field to the first valid non-numeric header line
   /// at the top of the receipt (e.g. "MG PROXI KELIBIA"), falling back to "Receipt Expense".
@@ -666,10 +625,8 @@ TOTAL DT 3.900
 
       final collapsed = clean.replaceAll(RegExp(r'\s+'), '').toUpperCase();
 
-      // Skip lines with prices
       if (RegExp(r'\b[0-9]+[.,][0-9]{2,3}\b').hasMatch(clean)) continue;
 
-      // Skip non-store metadata headers
       if (collapsed.contains('TICKET') ||
           collapsed.contains('CAISSE') ||
           collapsed.contains('CAISSIER') ||
@@ -692,7 +649,6 @@ TOTAL DT 3.900
         continue;
       }
 
-      // Must have at least 3 letters
       final letterCount = RegExp(r'[A-Za-z\u00C0-\u024F]').allMatches(clean).length;
       if (letterCount >= 3) {
         return clean;

@@ -526,7 +526,6 @@ class BudgetController extends ChangeNotifier {
         ? _currentActiveMonth
         : monthKeyFromDate(DateTime.now());
 
-    // 1. Generate full monthly summary report
     final report = MonthlySummaryReport(
       id: 'rep-${DateTime.now().millisecondsSinceEpoch}',
       monthLabel: formatFullMonthName(pastMonthKey),
@@ -544,16 +543,13 @@ class BudgetController extends ChangeNotifier {
     );
     _monthlyReports.insert(0, report);
 
-    // 2. Archive legacy maps
     _monthlyArchive[pastMonthKey] = List<TransactionRecord>.from(_transactions);
     _archivedCaps[pastMonthKey] = _totalCap;
 
-    // 3. Zero-reset: clear current expenses and reset trackers
     _transactions.clear();
     _totalCap = (newBudgetCap.isFinite ? newBudgetCap : 0.0)
         .clamp(0.0, double.infinity);
 
-    // Derive or set next month key
     _currentActiveMonth = nextMonthLabel.contains('-')
         ? nextMonthLabel
         : monthKeyFromDate(DateTime.now());

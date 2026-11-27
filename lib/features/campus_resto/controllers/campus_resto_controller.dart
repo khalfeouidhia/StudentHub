@@ -164,10 +164,8 @@ class CampusRestoController extends ChangeNotifier {
     notifyListeners();
 
     try {
-      // 1. Restore offline cached dashboard if present
       await _restoreCachedDashboard();
 
-      // 2. Check if a session exists in storage
       final hasSession = await _sessionStorage.hasSession();
       if (!hasSession) {
         _authStatus = RestoAuthStatus.unauthenticated;
@@ -175,7 +173,6 @@ class CampusRestoController extends ChangeNotifier {
         return;
       }
 
-      // 3. Saved cookie found — probe session heartbeat
       final checkResult = await _authService.checkSession();
 
       // Guard against race condition: check if user logged out while checkSession was in-flight
@@ -358,7 +355,6 @@ class CampusRestoController extends ChangeNotifier {
     _errorMessage = null;
     notifyListeners();
 
-    // 1. If active WebView is present, use primary JS bridge
     if (_restoService.hasActiveWebView) {
       try {
         final html =
@@ -378,7 +374,6 @@ class CampusRestoController extends ChangeNotifier {
       } catch (_) {}
     }
 
-    // 2. Secondary Engine: Native HTTP Client (ensures tests with MockClient work 100%)
     final uri = Uri.parse('$_baseUrl$dashboardPath');
     final headers = {
       if (cookieHeader != null) 'Cookie': cookieHeader,
@@ -499,7 +494,6 @@ class CampusRestoController extends ChangeNotifier {
       return null;
     }
 
-    // 1. Primary Engine: Active WebView JS Bridge
     if (_restoService.hasActiveWebView) {
       try {
         final html = await _restoService.fetchMealDetailsHtml(cleanId,
@@ -516,7 +510,6 @@ class CampusRestoController extends ChangeNotifier {
       } catch (_) {}
     }
 
-    // 2. Secondary Engine: Native HTTP Client
     final uri = Uri.parse('$_baseUrl$mealDetailsPath');
     final headers = {
       if (cookieHeader != null) 'Cookie': cookieHeader,
@@ -544,11 +537,8 @@ class CampusRestoController extends ChangeNotifier {
         _mealDetailsCache[cleanId] = details;
         return details;
       }
-    } catch (_) {
-      // Tolerated without failing general controller state
-    }
+    } catch (_) {}
 
-    // 3. Fallback Engine: Dio via _restoService
     try {
       final html = await _restoService.fetchMealDetailsHtml(cleanId,
           cookieHeader: cookieHeader);
@@ -579,7 +569,6 @@ class CampusRestoController extends ChangeNotifier {
       return false;
     }
 
-    // 1. Primary Engine: Active WebView JS Bridge
     if (_restoService.hasActiveWebView) {
       try {
         final html = await _restoService.reserveMeal(cleanRef,
@@ -591,7 +580,6 @@ class CampusRestoController extends ChangeNotifier {
       } catch (_) {}
     }
 
-    // 2. Secondary Engine: Native HTTP Client
     final uri = Uri.parse('$_baseUrl$reservationPath');
     final headers = {
       if (cookieHeader != null) 'Cookie': cookieHeader,
@@ -627,7 +615,6 @@ class CampusRestoController extends ChangeNotifier {
       }
     } catch (_) {}
 
-    // 3. Fallback Engine: Dio via _restoService
     try {
       final html =
           await _restoService.reserveMeal(cleanRef, cookieHeader: cookieHeader);

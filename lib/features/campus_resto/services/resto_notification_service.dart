@@ -114,12 +114,10 @@ class RestoNotificationService {
         .where((m) => m.dateKey == tomorrowDateKey)
         .toList();
 
-    // If tomorrow has no scheduled meals (e.g. Sunday), suppress reminder
     if (mealsForTomorrow.isEmpty) {
       return false;
     }
 
-    // If user already reserved all available meals for tomorrow, suppress reminder
     final hasUnreserved =
         mealsForTomorrow.any((m) => m.status == MealStatus.notReserved);
     return hasUnreserved;
@@ -168,7 +166,6 @@ class RestoNotificationService {
       0,
     );
 
-    // If 8:00 AM today has already passed, schedule for next 8:00 AM
     if (nowTz.isAfter(scheduledTz)) {
       scheduledTz = scheduledTz.add(const Duration(days: 1));
     }

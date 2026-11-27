@@ -72,16 +72,13 @@ class MealTimeSlotResolver {
 
   /// Capitalizes and formats the weekday name for [date] in French or English.
   static String formatWeekday(DateTime date, {bool english = false}) {
-    // Primary formatting attempt via DateFormat
     try {
       final formatted =
           DateFormat('EEEE', english ? 'en_US' : 'fr_FR').format(date);
       if (formatted.isNotEmpty) {
         return formatted[0].toUpperCase() + formatted.substring(1);
       }
-    } catch (_) {
-      // Safe fallback when locale data is not loaded in test or headless environment
-    }
+    } catch (_) {}
 
     if (english) {
       switch (date.weekday) {
@@ -136,7 +133,6 @@ class MealTimeSlotResolver {
     final today = DateTime(current.year, current.month, current.day);
 
     if (minuteOfDay < 14 * 60) {
-      // 00:00 to 13:59 -> Today's Lunch
       return MealTimeSlot(
         targetDate: today,
         mealType: MealType.dejeuner,
@@ -147,7 +143,6 @@ class MealTimeSlotResolver {
         weekdayName: formatWeekday(today, english: useEnglishLabels),
       );
     } else if (minuteOfDay <= 20 * 60 + 30) {
-      // 14:00 to 20:30 -> Today's Dinner
       return MealTimeSlot(
         targetDate: today,
         mealType: MealType.diner,
@@ -158,7 +153,6 @@ class MealTimeSlotResolver {
         weekdayName: formatWeekday(today, english: useEnglishLabels),
       );
     } else {
-      // 20:31 to 23:59 -> Tomorrow's Lunch
       final tomorrow = DateTime(current.year, current.month, current.day + 1);
       return MealTimeSlot(
         targetDate: tomorrow,
@@ -174,16 +168,6 @@ class MealTimeSlotResolver {
 
   /// Scans forward up to [maxDaysAhead] (default 7 days) to find the first
   /// meal slot with an available, non-empty menu in [controller] or [hasMenu].
-  ///
-  /// Initial slot based on [now]:
-  /// - Before 14:00: Start at (Today, Déjeuner)
-  /// - 14:00 – 20:30: Start at (Today, Dîner)
-  /// - After 20:30: Start at (Tomorrow, Déjeuner)
-  ///
-  /// Sequential forward loop: Déjeuner -> Dîner -> Next Day Déjeuner -> Next Day Dîner
-  /// - If a menu exists: Stops searching and returns that slot immediately.
-  /// - If empty/null: Automatically skips and checks the next chronological slot.
-  /// - If zero menus exist across the entire window: Falls back to the initial slot.
   static MealTimeSlot resolveNextAvailable({
     DateTime? now,
     CampusRestoController? controller,
@@ -194,7 +178,6 @@ class MealTimeSlotResolver {
     final current = now ?? DateTime.now();
     final initialSlot = resolve(current, useEnglishLabels);
 
-    // If controller is null and no predicate provided, return initial slot
     if (controller == null && hasMenu == null) {
       return initialSlot;
     }
@@ -202,7 +185,6 @@ class MealTimeSlotResolver {
     final today = DateTime(current.year, current.month, current.day);
     final minuteOfDay = current.hour * 60 + current.minute;
 
-    // Determine initial day offset and starting meal type
     int startDayOffset;
     MealType startMealType;
     if (minuteOfDay < 14 * 60) {
@@ -216,7 +198,6 @@ class MealTimeSlotResolver {
       startMealType = MealType.dejeuner;
     }
 
-    // Predicate checking for available non-empty menu
     bool isSlotAvailable(MealTimeSlot candidate) {
       if (hasMenu != null) {
         return hasMenu(candidate);
@@ -231,7 +212,6 @@ class MealTimeSlotResolver {
     MealType currentMealType = startMealType;
     final maxOffset = startDayOffset + maxDaysAhead;
 
-    // Loop forward through upcoming meal slots
     while (currentDayOffset <= maxOffset) {
       final candidateDate =
           DateTime(today.year, today.month, today.day + currentDayOffset);
@@ -261,7 +241,6 @@ class MealTimeSlotResolver {
         return candidateSlot;
       }
 
-      // Advance: Déjeuner -> Dîner -> Next Day Déjeuner
       if (currentMealType == MealType.dejeuner) {
         currentMealType = MealType.diner;
       } else {
@@ -270,7 +249,6 @@ class MealTimeSlotResolver {
       }
     }
 
-    // If zero menus exist across entire lookahead window, fallback to initial slot
     return initialSlot;
   }
 }
@@ -351,14 +329,11 @@ class RestoUMealStrip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Defensively watch CampusRestoController so missing provider does not crash legacy tests
     CampusRestoController? activeController = controller;
     try {
       final watchedController = context.watch<CampusRestoController>();
       activeController ??= watchedController;
-    } catch (_) {
-      // Safe fallback when CampusRestoController is omitted from Provider tree
-    }
+    } catch (_) {}
 
     final now = currentTime ?? DateTime.now();
     final slot = mealItemOverride != null
@@ -380,11 +355,8 @@ class RestoUMealStrip extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          // 1. Dynamic Header Row with Reservation Pill
           _buildHeaderRow(context, slot, isReserved, mealItem),
           const SizedBox(height: 10),
-
-          // 2. Bounded Horizontal Dish List / Empty / Loading State
           _buildContentArea(context, activeController, mealItem),
         ],
       ),
@@ -439,7 +411,6 @@ class RestoUMealStrip extends StatelessWidget {
       key: const Key('resto_u_meal_header'),
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        // Left: Fork/Knife Icon + Meal Title + Optional "Demain" / "Tomorrow" / Weekday badge
         Expanded(
           flex: 3,
           child: FittedBox(
@@ -491,7 +462,6 @@ class RestoUMealStrip extends StatelessWidget {
         ),
         const SizedBox(width: 8),
 
-        // Right: Interactive Reservation Pill Badge
         Flexible(
           flex: 2,
           fit: FlexFit.loose,
@@ -564,14 +534,12 @@ class RestoUMealStrip extends StatelessWidget {
       return _buildEmptyState(context, controller);
     }
 
-    // Inspect pre-fetched memory cache
     final cachedDetails = controller.cachedMealDetails(mealItem.id);
     if (cachedDetails != null && cachedDetails.isNotEmpty) {
       return _buildDishStrip(
           context, cachedDetails.prioritizedDishes, mealItem);
     }
 
-    // Secondary asynchronous fetch
     return FutureBuilder<MealDetails?>(
       future: controller.getMealDetails(mealItem.id),
       builder: (context, snapshot) {
@@ -630,7 +598,6 @@ class RestoUMealStrip extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.center,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      // Dish Thumbnail with ClipRRect and Fallback Placeholder
                       ClipRRect(
                         borderRadius: BorderRadius.circular(10),
                         child: SizedBox(
@@ -641,7 +608,6 @@ class RestoUMealStrip extends StatelessWidget {
                       ),
                       const SizedBox(width: 8),
 
-                      // Dish Category & Name
                       SizedBox(
                         width: 82,
                         child: Column(

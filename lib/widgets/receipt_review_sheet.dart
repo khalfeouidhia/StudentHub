@@ -27,7 +27,6 @@ class ReceiptReviewSheet extends StatefulWidget {
   ) async {
     HapticFeedback.lightImpact();
 
-    // 1. Show source selection sheet (Camera vs Gallery vs PC Sample)
     final dynamic result = await showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -45,13 +44,12 @@ class ReceiptReviewSheet extends StatefulWidget {
 
     final ImageSource source = result as ImageSource;
 
-    // 2. Pick the image
     XFile? pickedFile;
     try {
       final picker = ImagePicker();
       pickedFile = await picker.pickImage(
         source: source,
-        imageQuality: 90, // Crisp thermal receipt text
+        imageQuality: 90,
       );
     } catch (e) {
       if (!context.mounted) return;
@@ -66,7 +64,6 @@ class ReceiptReviewSheet extends StatefulWidget {
 
     if (pickedFile == null || !context.mounted) return;
 
-    // 3. Show sleek "Scanning receipt..." loading indicator
     BuildContext? dialogContext;
     showDialog(
       context: context,
@@ -81,7 +78,6 @@ class ReceiptReviewSheet extends StatefulWidget {
     try {
       parsed = await ReceiptOcrService.instance.scanReceipt(pickedFile);
     } catch (e) {
-      // Fallback: graceful degraded receipt with attached image
       parsed = ParsedReceipt(
         merchant: 'Receipt Expense',
         items: [],
@@ -98,7 +94,6 @@ class ReceiptReviewSheet extends StatefulWidget {
 
     if (!context.mounted) return;
 
-    // 4. Open the editable confirmation sheet
     await show(context, budget, parsedReceipt: parsed);
   }
 
@@ -151,10 +146,8 @@ class _ReceiptReviewSheetState extends State<ReceiptReviewSheet> {
     _merchantController = TextEditingController(text: widget.parsedReceipt.merchant);
     _selectedDate = widget.parsedReceipt.date ?? DateTime.now();
 
-    // Select category matching merchant
     _selectedCategory = _resolveInitialCategory(widget.parsedReceipt.merchant);
 
-    // Initialize item controllers
     for (final item in widget.parsedReceipt.items) {
       _addItemToState(item.name, item.price);
     }
@@ -285,7 +278,6 @@ class _ReceiptReviewSheetState extends State<ReceiptReviewSheet> {
       return;
     }
 
-    // Build itemized breakdown summary
     final itemDescriptions = <String>[];
     for (final c in _itemControllers) {
       final n = c.nameCtrl.text.trim();
@@ -296,7 +288,6 @@ class _ReceiptReviewSheetState extends State<ReceiptReviewSheet> {
       }
     }
 
-    // Map UI category to BudgetController internal categories
     String mappedCategory = _selectedCategory;
     if (_selectedCategory == 'Food & Groceries' || _selectedCategory == 'Resto / Café') {
       mappedCategory = 'Campus Dining & Groceries';
@@ -308,7 +299,6 @@ class _ReceiptReviewSheetState extends State<ReceiptReviewSheet> {
       mappedCategory = 'Housing & Utilities';
     }
 
-    // Add expense to controller
     widget.budget.addExpense(
       title: merchant,
       amount: total,
@@ -350,7 +340,6 @@ class _ReceiptReviewSheetState extends State<ReceiptReviewSheet> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // 1. Forest Green Header
           Container(
             padding: const EdgeInsets.fromLTRB(20, 12, 16, 16),
             decoration: const BoxDecoration(
@@ -465,7 +454,6 @@ class _ReceiptReviewSheetState extends State<ReceiptReviewSheet> {
             ),
           ),
 
-          // 2. Scrollable Form Body
           Flexible(
             child: SingleChildScrollView(
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
@@ -504,7 +492,6 @@ class _ReceiptReviewSheetState extends State<ReceiptReviewSheet> {
                     const SizedBox(height: 14),
                   ],
 
-                  // Merchant Field
                   Text(
                     'MERCHANT / STORE',
                     style: GoogleFonts.plusJakartaSans(
@@ -541,7 +528,6 @@ class _ReceiptReviewSheetState extends State<ReceiptReviewSheet> {
                   ),
                   const SizedBox(height: 18),
 
-                  // Grand Total Field Card
                   Container(
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
@@ -626,7 +612,6 @@ class _ReceiptReviewSheetState extends State<ReceiptReviewSheet> {
                   ),
                   const SizedBox(height: 20),
 
-                  // Extracted Items Section
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -689,7 +674,6 @@ class _ReceiptReviewSheetState extends State<ReceiptReviewSheet> {
                         padding: const EdgeInsets.only(bottom: 8),
                         child: Row(
                           children: [
-                            // Item Name
                             Expanded(
                               flex: 6,
                               child: Container(
@@ -719,7 +703,6 @@ class _ReceiptReviewSheetState extends State<ReceiptReviewSheet> {
                               ),
                             ),
                             const SizedBox(width: 8),
-                            // Item Price
                             Expanded(
                               flex: 3,
                               child: Container(
@@ -758,7 +741,6 @@ class _ReceiptReviewSheetState extends State<ReceiptReviewSheet> {
                               ),
                             ),
                             const SizedBox(width: 4),
-                            // Delete Item
                             IconButton(
                               icon: const Icon(Icons.close_rounded,
                                   color: AppColors.expenseRed, size: 18),
@@ -774,7 +756,6 @@ class _ReceiptReviewSheetState extends State<ReceiptReviewSheet> {
                     }),
                   const SizedBox(height: 18),
 
-                  // Category Selector Chips
                   Text(
                     'CATEGORY',
                     style: GoogleFonts.plusJakartaSans(
@@ -820,7 +801,6 @@ class _ReceiptReviewSheetState extends State<ReceiptReviewSheet> {
                   ),
                   const SizedBox(height: 24),
 
-                  // Save Expense Button
                   SizedBox(
                     width: double.infinity,
                     height: 52,
